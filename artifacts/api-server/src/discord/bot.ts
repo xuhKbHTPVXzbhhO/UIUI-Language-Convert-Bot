@@ -38,7 +38,7 @@ async function replyWithChunks(
 ): Promise<void> {
   const chunks = splitForDiscord(body);
   const first: MessageCreateOptions = {
-    content: `${header}\n${chunks[0]}`,
+    content: header ? `${header}\n${chunks[0]}` : chunks[0],
     allowedMentions: { repliedUser: false },
   };
 
@@ -70,7 +70,7 @@ function commandArguments(content: string): {
 }
 
 async function handleMessage(message: Message): Promise<void> {
-  if (message.author.bot) return;
+  if (message.client.user?.id === message.author.id) return;
 
   const command = commandArguments(message.content);
 
@@ -93,7 +93,7 @@ async function handleMessage(message: Message): Promise<void> {
     }
 
     if (result.text) {
-      await replyWithChunks(message, "🔓 原文", result.text);
+      await replyWithChunks(message, "", result.text);
     }
     return;
   }
@@ -125,7 +125,7 @@ async function handleMessage(message: Message): Promise<void> {
   }
 
   if (result.text) {
-    await replyWithChunks(message, "🔓 原文", result.text);
+    await replyWithChunks(message, "", result.text);
   }
 }
 
