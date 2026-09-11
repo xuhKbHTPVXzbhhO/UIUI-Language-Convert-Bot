@@ -113,13 +113,10 @@ function encodeSection(text: string): string {
 export function isUiLanguage(input: string): boolean {
   const normalized = normalize(input);
 
-  if (!normalized || /[^うい ]/.test(normalized)) return false;
+  if (!normalized) return false;
 
-  const tokens = normalized.split(" ");
-  if (tokens[0].length !== 2 || tokens.length < 2) return false;
-
-  const mask = numberFromUi(tokens[0]);
-  return Number.isInteger(mask) && mask >= 0 && mask < MASKS.length;
+  const result = decodeFromUi(normalized);
+  return !result.error && result.text.length > 0;
 }
 
 export function decodeFromUi(input: string): CodecResult {
