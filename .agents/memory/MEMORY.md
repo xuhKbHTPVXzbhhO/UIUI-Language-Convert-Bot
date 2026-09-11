@@ -1,0 +1,1 @@
+- [Discord bot setup](discord-bot-setup.md) — bot gateway work needs a bot token secret and Message Content Intent; OAuth Discord connections cannot replace either.

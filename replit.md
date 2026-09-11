@@ -1,6 +1,6 @@
-# [Project name]
+# ういうい語 Discord Bot
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Discord bot that decodes 「う」「い」 language and can encode ordinary text back into it.
 
 ## Run & Operate
 
@@ -30,7 +30,11 @@ _Populate as you build — non-obvious choices a reader couldn't infer from the 
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Automatically decodes valid ういうい語 messages.
+- `!encode <文章>` converts ordinary text into ういうい語.
+- `!decode <ういうい語>` explicitly decodes a supplied value.
+- `!help` shows the available commands.
+- Long Discord replies are split safely under Discord's message limit.
 
 ## User preferences
 
@@ -38,7 +42,10 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- `DISCORD_TOKEN` is stored as a Replit Secret and is required to connect the bot.
+- Discord Developer Portal must have **Message Content Intent** enabled for the bot.
+- The bot needs View Channels, Send Messages, and Read Message History permissions.
+- After enabling the privileged intent, restart the API Server workflow.
 
 ## Pointers
 
