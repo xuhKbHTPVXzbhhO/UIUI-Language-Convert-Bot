@@ -5,6 +5,7 @@ Discord bot that decodes 「う」「い」 language and can encode ordinary tex
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run start:bot` — run the compiled Discord Bot worker
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -46,6 +47,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 - Discord Developer Portal must have **Message Content Intent** enabled for the bot.
 - The bot needs View Channels, Send Messages, and Read Message History permissions.
 - After enabling the privileged intent, restart the API Server workflow.
+- For Render, deploy this repository as a Background Worker using `render.yaml` and add `DISCORD_TOKEN` in the Render service environment.
 
 ## Pointers
 

@@ -1,0 +1,11 @@
+services:
+  - type: worker
+    name: ui-discord-bot
+    runtime: node
+    buildCommand: corepack enable && corepack pnpm install --frozen-lockfile && corepack pnpm --filter @workspace/api-server run build
+    startCommand: corepack pnpm --filter @workspace/api-server run start:bot
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DISCORD_TOKEN
+        sync: false
