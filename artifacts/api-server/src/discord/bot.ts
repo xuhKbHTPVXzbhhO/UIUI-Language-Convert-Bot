@@ -10,6 +10,7 @@ import { decodeFromUi, encodeToUi, isUiLanguage } from "./codec";
 const MAX_MESSAGE_LENGTH = 2000;
 const RESPONSE_CHUNK_LENGTH = MAX_MESSAGE_LENGTH - 100;
 const COMMAND_PREFIX = "!";
+const GATEWAY_WATCHDOG_INTERVAL_MS = 60_000;
 
 function splitForDiscord(value: string): string[] {
   if (value.length <= RESPONSE_CHUNK_LENGTH) return [value];
@@ -145,7 +146,10 @@ export function startDiscordBot(): void {
     ],
   });
 
-  client.once("ready", (readyClient) => {
+  let loginInProgress = true;
+
+  client.once("clientReady", (readyClient) => {
+    loginInProgress = false;
     logger.info({ tag: readyClient.user.tag }, "Discord bot is ready");
   });
 
@@ -159,7 +163,61 @@ export function startDiscordBot(): void {
     logger.error({ err: error }, "Discord client error");
   });
 
+  client.on("shardDisconnect", (closeEvent, shardId) => {
+    logger.warn(
+      { code: closeEvent.code, reason: closeEvent.reason, shardId },
+      "Discord gateway disconnected",
+    );
+  });
+
+  client.on("shardReconnecting", (shardId) => {
+    logger.info({ shardId }, "Discord gateway reconnecting");
+  });
+
+  client.on("shardResume", (shardId, replayedEvents) => {
+    logger.info(
+      { replayedEvents, shardId },
+      "Discord gateway connection resumed",
+    );
+  });
+
+  client.on("shardError", (error, shardId) => {
+    logger.error({ err: error, shardId }, "Discord gateway error");
+  });
+
+  const login = (): void => {
+    if (loginInProgress || client.isReady()) return;
+
+    loginInProgress = true;
+    void client.login(token).catch((error: unknown) => {
+      loginInProgress = false;
+      const message = error instanceof Error ? error.message : String(error);
+
+      if (message === "Used disallowed intents") {
+        logger.error(
+          { err: error },
+          "Discord rejected the bot intents; enable Message Content Intent in the Discord Developer Portal",
+        );
+        return;
+      }
+
+      logger.error({ err: error }, "Discord bot login failed");
+    });
+  };
+
+  const watchdog = setInterval(() => {
+    if (client.isReady() || loginInProgress) return;
+
+    logger.warn(
+      "Discord bot is not ready; restarting the gateway login",
+    );
+    client.destroy();
+    login();
+  }, GATEWAY_WATCHDOG_INTERVAL_MS);
+  watchdog.unref();
+
   void client.login(token).catch((error: unknown) => {
+    loginInProgress = false;
     const message = error instanceof Error ? error.message : String(error);
 
     if (message === "Used disallowed intents") {
