@@ -126,11 +126,11 @@ async function handleMessage(message: Message): Promise<void> {
   }
 
   if (result.text) {
-    await replyWithChunks(
-      message,
-      "/skip\n原文",
-      `「${result.text}」`,
-    );
+    await message.reply({
+      content: "/skip",
+      allowedMentions: { repliedUser: false },
+    });
+    await replyWithChunks(message, "原文", `「${result.text}」`);
   }
 }
 
