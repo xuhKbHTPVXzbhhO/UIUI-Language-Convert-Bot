@@ -1,6 +1,7 @@
 import {
   Client,
   GatewayIntentBits,
+  WebhookClient,
   type Message,
   type MessageCreateOptions,
 } from "discord.js";
@@ -57,6 +58,18 @@ async function replyWithChunks(
   }
 }
 
+async function sendDecodedMessage(
+  webhook: WebhookClient,
+  text: string,
+): Promise<void> {
+  for (const chunk of splitForDiscord(`原文\n「${text}」`)) {
+    await webhook.send({
+      content: chunk,
+      allowedMentions: { parse: [] },
+    });
+  }
+}
+
 function commandArguments(content: string): {
   command: string;
   input: string;
@@ -70,7 +83,10 @@ function commandArguments(content: string): {
   };
 }
 
-async function handleMessage(message: Message): Promise<void> {
+async function handleMessage(
+  message: Message,
+  decodedWebhook: WebhookClient | null,
+): Promise<void> {
   if (message.client.user?.id === message.author.id) return;
 
   const command = commandArguments(message.content);
@@ -126,10 +142,11 @@ async function handleMessage(message: Message): Promise<void> {
   }
 
   if (result.text) {
-    await message.reply({
-      content: "/skip",
-      allowedMentions: { repliedUser: false },
-    });
+    if (decodedWebhook) {
+      await sendDecodedMessage(decodedWebhook, result.text);
+      return;
+    }
+
     await replyWithChunks(message, "原文", `「${result.text}」`);
   }
 }
@@ -150,6 +167,24 @@ export function startDiscordBot(): void {
     ],
   });
 
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  let decodedWebhook: WebhookClient | null = null;
+
+  if (webhookUrl) {
+    try {
+      decodedWebhook = new WebhookClient({ url: webhookUrl });
+    } catch (error) {
+      logger.error(
+        { err: error },
+        "Discord decoded-message webhook configuration is invalid",
+      );
+    }
+  } else {
+    logger.warn(
+      "DISCORD_WEBHOOK_URL is not configured; automatic decoding will reply in the source channel",
+    );
+  }
+
   let loginInProgress = true;
 
   client.once("clientReady", (readyClient) => {
@@ -158,7 +193,7 @@ export function startDiscordBot(): void {
   });
 
   client.on("messageCreate", (message) => {
-    void handleMessage(message).catch((error) => {
+    void handleMessage(message, decodedWebhook).catch((error) => {
       logger.error({ err: error }, "Discord message handling failed");
     });
   });
