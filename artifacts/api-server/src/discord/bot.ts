@@ -58,16 +58,11 @@ async function replyWithChunks(
   }
 }
 
-async function sendDecodedMessage(
-  webhook: WebhookClient,
-  text: string,
-): Promise<void> {
-  for (const chunk of splitForDiscord(`原文\n「${text}」`)) {
-    await webhook.send({
-      content: chunk,
-      allowedMentions: { parse: [] },
-    });
-  }
+async function sendSkipCommand(webhook: WebhookClient): Promise<void> {
+  await webhook.send({
+    content: "/skip",
+    allowedMentions: { parse: [] },
+  });
 }
 
 function commandArguments(content: string): {
@@ -143,8 +138,7 @@ async function handleMessage(
 
   if (result.text) {
     if (decodedWebhook) {
-      await sendDecodedMessage(decodedWebhook, result.text);
-      return;
+      await sendSkipCommand(decodedWebhook);
     }
 
     await replyWithChunks(message, "原文", `「${result.text}」`);
